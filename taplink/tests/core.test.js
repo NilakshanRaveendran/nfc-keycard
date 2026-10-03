@@ -8,13 +8,13 @@ test('strips tracking from Instagram profile links',()=>{
  }
 });
 test('recognises profile links on every platform and drops tracking',()=>{
- for(const [raw,platform,url] of [['https://www.tiktok.com/@some.one?_t=abc&_r=1','tiktok','https://www.tiktok.com/@some.one'],['youtube.com/@SomeChannel/videos','youtube','https://www.youtube.com/@SomeChannel'],['https://twitter.com/some_one?s=21','x','https://x.com/some_one'],['https://m.facebook.com/some.one','facebook','https://www.facebook.com/some.one'],['https://www.linkedin.com/in/some-one?utm_source=share','linkedin','https://www.linkedin.com/in/some-one/'],['snapchat.com/add/some.one','snapchat','https://www.snapchat.com/add/some.one'],['https://www.threads.net/@some.one','threads','https://www.threads.com/@some.one'],['wa.me/94771234567','whatsapp','https://wa.me/94771234567'],['t.me/some_one','telegram','https://t.me/some_one']]){
+ for(const [raw,platform,url] of [['https://www.tiktok.com/@some.one?_t=abc&_r=1','tiktok','https://www.tiktok.com/@some.one'],['youtube.com/@SomeChannel/videos','youtube','https://www.youtube.com/@SomeChannel'],['https://twitter.com/some_one?s=21','x','https://x.com/some_one'],['https://m.facebook.com/some.one','facebook','https://www.facebook.com/some.one'],['https://www.linkedin.com/in/some-one?utm_source=share','linkedin','https://www.linkedin.com/in/some-one/'],['snapchat.com/add/some.one','snapchat','https://www.snapchat.com/add/some.one'],['https://www.threads.net/@some.one','threads','https://www.threads.com/@some.one'],['wa.me/94771234567','whatsapp','https://wa.me/94771234567'],['t.me/some_one','telegram','https://t.me/some_one'],['https://github.com/Some-One?tab=repositories','github','https://github.com/Some-One']]){
   const link=parseLink(raw);assert.equal(link.platform,platform,raw);assert.equal(link.kind,'profile',raw);assert.equal(link.url,url,raw);
   assert.deepEqual(parseLink(url),link,raw);
  }
 });
 test('keeps non-profile platform links intact',()=>{
- for(const [raw,platform] of [['https://www.youtube.com/watch?v=abc123','youtube'],['https://youtu.be/abc123','youtube'],['https://www.facebook.com/profile.php?id=100000000000001','facebook'],['https://www.instagram.com/p/abc/','instagram'],['https://instagram.com/tv/','instagram'],['https://instagram.com/explore/','instagram'],['https://www.tiktok.com/@some.one/video/123','tiktok'],['https://x.com/home','x']]){
+ for(const [raw,platform] of [['https://www.youtube.com/watch?v=abc123','youtube'],['https://youtu.be/abc123','youtube'],['https://www.facebook.com/profile.php?id=100000000000001','facebook'],['https://www.instagram.com/p/abc/','instagram'],['https://instagram.com/tv/','instagram'],['https://instagram.com/explore/','instagram'],['https://www.tiktok.com/@some.one/video/123','tiktok'],['https://x.com/home','x'],['https://github.com/some-one/some-repo','github'],['https://github.com/settings','github']]){
   const link=parseLink(raw);assert.equal(link.platform,platform,raw);assert.equal(link.kind,'link',raw);assert.equal(link.url,new URL(raw).href,raw);
  }
 });
@@ -23,7 +23,10 @@ test('accepts any http or https link and labels it by its real host',()=>{
  assert.equal(parseLink(' example.com ').url,'https://example.com/');
  assert.equal(parseLink('http://example.com:8080/a').url,'http://example.com:8080/a');
  assert.equal(parseLink('www.example.com').display,'example.com');
- for(const raw of ['https://instagram.com.evil.com/user','https://evil.com/instagram.com/user','https://instagram.com:444/user']){const link=parseLink(raw);assert.equal(link.platform,'link',raw);assert.equal(link.label,'WEBSITE LINK');assert.equal(link.display,new URL(raw).host);}
+ for(const raw of ['https://instagram.com.evil.com/user','https://evil.com/instagram.com/user','https://instagram.com:444/user']){const link=parseLink(raw);assert.equal(link.platform,'link',raw);assert.equal(link.label,'WEBSITE LINK');assert.equal(link.display,new URL(raw).host+new URL(raw).pathname);}
+ assert.equal(parseLink('https://github.com/some-one/some-repo/').display,'github.com/some-one/some-repo');
+ assert.equal(parseLink('https://youtu.be/abc123?t=5').display,'youtu.be/abc123');
+ assert.equal(parseLink(`example.com/${'a'.repeat(80)}`).display.length,48);
 });
 test('rejects unsafe schemes, credentials and malformed input',()=>{
  for(const raw of ['',null,'   ','@someone','someone','https://user@instagram.com/example','https://user:pw@example.com/','abc/def','hello world','https://exa mple.com','https://localhost/x','javascript:alert(1)','data:text/html,x','mailto:a@example.com','ftp://example.com/x','tel:+123',`https://example.com/${'a'.repeat(2100)}`])assert.throws(()=>parseLink(raw),String(raw).slice(0,40));

@@ -14,7 +14,7 @@ function render() {
   $('size-note').hidden=!large;
   $('size-note').textContent=large ? `This link needs about ${link.bytes} bytes. NTAG213 tags hold about ${SMALL_TAG_BYTES}, so use an NTAG215 or NTAG216.` : '';
   $('destination-empty').hidden=Boolean(link); $('destination-link').hidden=!link;
-  if(link) { $('destination-link').href=link.url; $('destination-link').textContent=link.url; } else { $('destination-link').removeAttribute('href'); }
+  if(link) { $('destination-link').href=$('preview').href=link.url; $('destination-link').textContent=link.url; } else { $('destination-link').removeAttribute('href'); $('preview').removeAttribute('href'); }
   $('preview-name').textContent=link ? link.display : 'your-link.com';
   $('preview-text').textContent=!link || link.platform==='link' ? 'Opens your link.' : link.kind==='profile' ? `Meet you on ${link.platformName}.` : `Opens on ${link.platformName}.`;
   $('preview-kind').textContent=link ? link.label : 'YOUR LINK';

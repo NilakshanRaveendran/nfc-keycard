@@ -2,6 +2,7 @@ const IG_RESERVED = new Set(['p','reel','reels','stories','explore','accounts','
 const IG_TABS = new Set(['reels','tagged','feed','guides']);
 const FB_RESERVED = new Set(['watch','groups','events','marketplace','pages','share','people','photo','photos','reel','reels','stories','login','gaming','help','settings','messages','notifications','friends','bookmarks','profile']);
 const X_RESERVED = new Set(['home','i','explore','search','settings','notifications','messages','intent','share','hashtag','login','signup','compose','tos','privacy']);
+const GH_RESERVED = new Set(['settings','orgs','explore','marketplace','pulls','issues','notifications','login','join','features','pricing','about','topics','sponsors','new','search','trending','collections','codespaces','enterprise']);
 const IG_NAME = /^[a-zA-Z0-9_](?:[a-zA-Z0-9_.]{0,28}[a-zA-Z0-9_])?$/;
 const igHandle = h => IG_NAME.test(h) && !h.includes('..') && !IG_RESERVED.has(h.toLowerCase()) ? h.toLowerCase() : null;
 const match = (pattern, h) => pattern.test(h) ? h : null;
@@ -33,7 +34,9 @@ const PLATFORMS = [
   { id:'whatsapp', name:'WhatsApp', noun:'chat', hosts:['wa.me'], prefix:'+',
     handle: h => match(/^\d{7,15}$/, h), build: h => `https://wa.me/${h}`, fromPath: single },
   { id:'telegram', name:'Telegram', noun:'profile', hosts:['t.me','telegram.me'], prefix:'@',
-    handle: h => match(/^[a-zA-Z][a-zA-Z0-9_]{4,31}$/, h), build: h => `https://t.me/${h}`, fromPath: single }
+    handle: h => match(/^[a-zA-Z][a-zA-Z0-9_]{4,31}$/, h), build: h => `https://t.me/${h}`, fromPath: single },
+  { id:'github', name:'GitHub', noun:'profile', hosts:['github.com'], prefix:'@',
+    handle: h => GH_RESERVED.has(h.toLowerCase()) ? null : match(/^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$/, h), build: h => `https://github.com/${h}`, fromPath: single }
 ];
 const LINK = { id:'link', name:'Website' };
 const URI_PREFIXES = ['https://www.','http://www.','https://','http://'];
@@ -43,6 +46,11 @@ const stripHost = host => host.toLowerCase().replace(/^(www|m|mobile)\./,'');
 export function ndefSize(url) {
   const prefix = URI_PREFIXES.find(p => url.startsWith(p)) ?? '';
   return 5 + new TextEncoder().encode(url.slice(prefix.length)).length;
+}
+// Shown in the preview for links that are not a recognised profile: the site plus where on it the link goes.
+function where(host, url) {
+  const text = host + url.pathname.replace(/\/+$/,'');
+  return text.length > 48 ? `${text.slice(0,47)}…` : text;
 }
 function result(platform, kind, handle, url) {
   const label = `${platform.name} ${kind === 'profile' ? platform.noun : 'link'}`.toUpperCase();
@@ -61,11 +69,11 @@ export function parseLink(raw) {
   if (url.href.length > 2048) throw new Error('This link is too long to write to a tag.');
   const host = stripHost(url.hostname);
   const platform = url.port ? null : PLATFORMS.find(p => p.hosts.includes(host));
-  if (!platform) return result(LINK, 'link', url.host.replace(/^www\./,''), url.href);
+  if (!platform) return result(LINK, 'link', where(url.host.replace(/^www\./,''), url), url.href);
   const candidate = platform.fromPath(url.pathname.split('/').filter(Boolean));
   const handle = candidate && platform.handle(candidate);
   // Profile links are rebuilt in canonical form, which drops tracking parameters. Anything else is kept as given.
-  return handle ? result(platform, 'profile', handle, platform.build(handle)) : result(platform, 'link', host, url.href);
+  return handle ? result(platform, 'profile', handle, platform.build(handle)) : result(platform, 'link', where(host, url), url.href);
 }
 export function createMessage(url) { return { records: [{ recordType: 'url', data: url }] }; }
 export function nfcError(error) {

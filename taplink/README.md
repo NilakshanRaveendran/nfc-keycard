@@ -15,7 +15,7 @@ Deploy `dist/` to HTTPS for phones. A plain HTTP LAN address will not enable Web
 
 ## Links
 
-There is one field: paste any `http`/`https` link (the `https://` is optional). Profile links for Instagram, YouTube, TikTok, Facebook, X, LinkedIn, Snapchat, Threads, WhatsApp and Telegram are recognised (`PLATFORMS` in `dist/core.js`) and rewritten in canonical form, which drops tracking parameters. Every other link (videos, posts, any website) is written as given and labelled with its real host. Links with embedded credentials and non-http schemes are rejected. Long links show a size warning, since an NTAG213 holds about 137 bytes.
+There is one field: paste any `http`/`https` link (the `https://` is optional). Profile links for Instagram, YouTube, TikTok, Facebook, X, LinkedIn, Snapchat, Threads, WhatsApp, Telegram and GitHub are recognised (`PLATFORMS` in `dist/core.js`) and rewritten in canonical form, which drops tracking parameters. Every other link (videos, posts, any website) is written as given and labelled with its real host. Links with embedded credentials and non-http schemes are rejected. Long links show a size warning, since an NTAG213 holds about 137 bytes.
 
 No account, analytics, database, API key, or profile persistence is used. URL formatting is validated, but account existence is not checked. Writing overwrites existing tag records; the app does not permanently lock tags. Write success means the browser's write promise resolved; verification requires a separate read. Cancellation cannot guarantee an already-started physical write was undone.
 
